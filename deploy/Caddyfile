@@ -1,0 +1,15 @@
+{$PAPERFORGE_DOMAIN} {
+    request_body {
+        max_size 64MB
+    }
+    handle /model/* {
+        reverse_proxy gateway:3000 {
+            flush_interval -1
+        }
+    }
+    handle {
+        reverse_proxy web:3000 {
+            flush_interval -1
+        }
+    }
+}

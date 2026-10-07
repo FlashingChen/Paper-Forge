@@ -1,0 +1,81 @@
+name: paperforge-selfhost
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: paperforge-web:${PAPERFORGE_IMAGE_TAG:?set image tag}
+    env_file: ../.env
+    environment:
+      PAPERFORGE_EXECUTOR: node
+      PAPERFORGE_DISPATCH_ENABLED: ${PAPERFORGE_DISPATCH_ENABLED:-0}
+      PAPERFORGE_CONTROL_URL: https://${PAPERFORGE_DOMAIN:?set your domain}
+      PAPERFORGE_MODEL_GATEWAY_URL: https://${PAPERFORGE_DOMAIN:?set your domain}
+    volumes:
+      - control-data:/data
+    restart: unless-stopped
+    logging: *logging
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: Dockerfile.gateway
+    image: paperforge-gateway:${PAPERFORGE_IMAGE_TAG:?set image tag}
+    environment:
+      PAPERFORGE_EXECUTOR: node
+      SESSION_SECRET: ${SESSION_SECRET:?set session secret}
+      PAPERFORGE_EXECUTION_SECRET: ${PAPERFORGE_EXECUTION_SECRET:?set execution secret}
+      PAPERFORGE_MODEL_ALLOWED_ORIGINS: ${PAPERFORGE_MODEL_ALLOWED_ORIGINS:?set upstream origin}
+    volumes:
+      - control-data:/data
+    restart: unless-stopped
+    logging: *logging
+
+  manager:
+    build:
+      context: ..
+      dockerfile: Dockerfile.node
+    image: paperforge-manager:${PAPERFORGE_IMAGE_TAG:?set image tag}
+    env_file: .env.node.local
+    environment:
+      PAPERFORGE_CONTROL_URL: https://${PAPERFORGE_DOMAIN:?set your domain}
+      PAPERFORGE_AGENT_IMAGE: paperforge-agent:${PAPERFORGE_IMAGE_TAG:?set image tag}
+      PAPERFORGE_NODE_STATE_DIR: /state
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - node-state:/state
+    depends_on:
+      gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+    logging: *logging
+
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      PAPERFORGE_DOMAIN: ${PAPERFORGE_DOMAIN:?set your domain}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  control-data:
+  node-state:
+  caddy-data:
+  caddy-config:

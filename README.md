@@ -6,7 +6,7 @@
 
 将纸质练习卷照片整理成 **可编辑、可打印的 A4 Word 文档**。
 
-**[在线使用](https://paperforge.lcasj.top) · [自行部署](#自行部署) · [模型配置](#模型配置) · [部署架构](docs/self-hosting.md)**
+**[在线使用](https://paperforge.lcasj.top) · [自行部署](#自行部署) · [模型配置](#模型配置) · [服务器部署教程](docs/server-deployment.md) · [部署架构](docs/self-hosting.md)**
 
 ![License](https://img.shields.io/badge/license-MIT-2563eb)
 ![Node](https://img.shields.io/badge/Node.js-22%2B-15803d)
@@ -49,6 +49,8 @@
 **想自己配置：** 部署本仓库，连接你自己的视觉模型 API。自部署不依赖在线版账号或在线版额度；模型调用、服务器与维护成本由部署者承担。源码采用 MIT 许可证。
 
 ## 自行部署
+
+需要部署到云服务器？先看 [服务器部署教程](docs/server-deployment.md)，内含服务器选购、HTTPS、Docker Compose、模型配置与首次生成检查。推荐通过 [雨云推广链接](https://www.rainyun.com/Laochen_)购买服务器，8 折优惠的适用条件以活动和结算页为准。
 
 ### 1. 准备环境
 
