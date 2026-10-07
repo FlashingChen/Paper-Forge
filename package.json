@@ -1,0 +1,36 @@
+{
+  "name": "paperforge",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "build": "next build && node scripts/build-execution.mjs",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "tsx --test tests/*.test.ts",
+    "test:py": "python3 -m unittest discover -s tests",
+    "build:execution": "node scripts/build-execution.mjs",
+    "start:dispatcher": "node .execution/dispatcher.cjs",
+    "start:agent": "node .execution/worker.cjs",
+    "pretest:unit": "npm run build:execution",
+    "start:node": "node .execution/node-manager.cjs"
+  },
+  "dependencies": {
+    "google-auth-library": "^11.1.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT"
+}

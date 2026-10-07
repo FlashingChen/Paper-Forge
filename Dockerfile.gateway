@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY scripts ./scripts
+COPY src ./src
+RUN node scripts/build-execution.mjs
+FROM ${NODE_IMAGE}
+ENV NODE_ENV=production PORT=3000 PAPERFORGE_CONTROL_ONLY=1 PAPERFORGE_DB_PATH=/data/paperforge.db PAPERFORGE_JOBS_DIR=/data/jobs
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund \
+ && addgroup -g 1001 nodejs && adduser -D -u 10001 -G nodejs paperforge \
+ && mkdir -p /data && chown paperforge:nodejs /data
+COPY --from=builder /app/.execution/model-gateway.cjs ./model-gateway.cjs
+USER 10001:1001
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+CMD ["node", "model-gateway.cjs"]

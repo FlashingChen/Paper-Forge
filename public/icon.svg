@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PaperForge">
+  <rect width="64" height="64" rx="12" fill="#1f2933"/>
+  <path d="M20 14h18l10 10v26a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z"
+        fill="#f7fafc"/>
+  <path d="M38 14v10h10" fill="none" stroke="#9aa5b1" stroke-width="2.5"/>
+  <g stroke="#3e4c59" stroke-width="2.5" stroke-linecap="round">
+    <path d="M24 32h16"/>
+    <path d="M24 40h16"/>
+    <path d="M24 48h9"/>
+  </g>
+</svg>

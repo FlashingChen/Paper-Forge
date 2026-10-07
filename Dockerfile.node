@@ -1,0 +1,18 @@
+# syntax=docker/dockerfile:1
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY scripts/build-execution.mjs ./scripts/build-execution.mjs
+COPY scripts/execution ./scripts/execution
+COPY src ./src
+RUN node scripts/build-execution.mjs
+
+FROM ${NODE_IMAGE}
+WORKDIR /app
+COPY --from=builder /app/.execution/node-manager.cjs ./node-manager.cjs
+# The trusted manager needs Docker socket access. Task containers never get it.
+ENV PAPERFORGE_NODE_STATE_DIR=/state
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD node -e "const s=JSON.parse(require('fs').readFileSync('/state/node-health.json'));if(Date.now()-s.lastPollAt>120000)process.exit(1)"
+CMD ["node", "node-manager.cjs"]

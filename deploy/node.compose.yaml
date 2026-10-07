@@ -1,0 +1,27 @@
+# Run only on the dedicated execution node. Does not expose ports or mount host data.
+services:
+  manager:
+    image: ${PAPERFORGE_MANAGER_IMAGE:?set an immutable manager image}
+    container_name: paperforge-${PAPERFORGE_NODE_SCOPE:-beta}-node-manager
+    restart: unless-stopped
+    env_file: ${PAPERFORGE_NODE_ENV_FILE:?path to node-only env file}
+    environment:
+      PAPERFORGE_NODE_STATE_DIR: /state
+      PAPERFORGE_NODE_SCOPE: ${PAPERFORGE_NODE_SCOPE:-beta}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - state:/state
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+    labels:
+      paperforge.scope: ${PAPERFORGE_NODE_SCOPE:-beta}
+      paperforge.role: manager
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+volumes:
+  state:
+    name: ${PAPERFORGE_NODE_VOLUME:?set a scope-specific paperforge prefix}-state

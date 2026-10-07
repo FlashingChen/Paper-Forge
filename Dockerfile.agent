@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+ENV PAPERFORGE_VENV=/opt/venv
+RUN apk add --no-cache python3 py3-pip bash
+COPY scripts/setup-venv.sh ./scripts/setup-venv.sh
+RUN bash scripts/setup-venv.sh
+COPY . .
+RUN node scripts/build-execution.mjs
+
+FROM ${NODE_IMAGE} AS runner
+ENV NODE_ENV=production \
+    PAPERFORGE_EXECUTOR=local \
+    PAPERFORGE_PYTHON=/opt/venv/bin/python \
+    PAPERFORGE_PI_BIN=/usr/local/bin/isolated-pi \
+    PAPERFORGE_ISOLATED_AGENT=1 HOME=/home/paperforge
+RUN apk add --no-cache python3 bash su-exec \
+ && npm install -g --no-audit --no-fund @earendil-works/pi-coding-agent@0.99.2 \
+ && npm cache clean --force
+WORKDIR /app
+COPY package.json package-lock.json ./
+# The unchanged auth/config modules import Next; no Web server is started here.
+RUN npm ci --omit=dev --no-audit --no-fund
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /app/.execution/worker.cjs ./.execution/worker.cjs
+COPY --from=builder /app/agent ./agent
+COPY --from=builder /app/reference ./reference
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 10001 --ingroup nodejs --home /home/paperforge paperforge \
+ && mkdir -p /home/paperforge/.pi/agent /work /persist \
+ && chown -R paperforge:nodejs /home/paperforge /work \
+ && chmod 0700 /persist
+COPY --chmod=755 docker/isolated-pi.sh /usr/local/bin/isolated-pi
+COPY --chmod=755 docker/agent-start.sh /usr/local/bin/agent-start
+# Root delivery wrapper; the fixed launcher drops pi/tool processes to UID 10001.
+CMD ["/usr/local/bin/agent-start"]
